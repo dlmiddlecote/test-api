@@ -1,0 +1,13 @@
+{
+  "name": "api-tests-example",
+  "version": "1.0.0",
+  "description": "API Tests examples",
+  "scripts": {
+    "test": "mocha"
+  },
+  "devDependencies": {
+    "chai": "3.5.0",
+    "supertest": "3.0.0"
+  }
+}
+

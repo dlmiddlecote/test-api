@@ -10,6 +10,16 @@ type resource struct {
 	Surname  string
 }
 
+type matchFunc []func(resource) bool
+
+func (m matchFunc) match(r resource) bool {
+	match := true
+	for _, f := range m {
+		match = match && f(r)
+	}
+	return match
+}
+
 var resources map[int]resource
 
 var resourceNotFound = errors.New("Resource Not Found")
@@ -32,10 +42,10 @@ func getResource(id int) (resource, error) {
 	return r, nil
 }
 
-func getResourcesByFilter(match func(resource) bool) []resource {
+func getResourcesByFilter(match matchFunc) []resource {
 	rs := []resource{}
 	for _, r := range resources {
-		if match(r) {
+		if match.match(r) {
 			rs = append(rs, r)
 		}
 	}
@@ -76,28 +86,22 @@ func main() {
 		forename := c.Query("forename")
 		surname := c.Query("surname")
 
-		var match func(resource) bool
-
-		if forename != "" && surname != "" {
-			// Both forename and surname in query
-			match = func(r resource) bool {
-				return r.Forename == forename && r.Surname == surname
-			}
-		} else if forename != "" {
-			// Just forename in query
-			match = func(r resource) bool {
-				return r.Forename == forename
-			}
-		} else if surname != "" {
-			// Just surname in query
-			match = func(r resource) bool {
-				return r.Surname == surname
-			}
-		} else {
-			// No query
-			match = func(_ resource) bool {
+		match := matchFunc{
+			func(_ resource) bool {
 				return true
-			}
+			},
+		}
+
+		if forename != "" {
+			match = append(match, func(r resource) bool {
+				return r.Forename == forename
+			})
+		}
+
+		if surname != "" {
+			match = append(match, func(r resource) bool {
+				return r.Surname == surname
+			})
 		}
 
 		for _, r := range getResourcesByFilter(match) {
